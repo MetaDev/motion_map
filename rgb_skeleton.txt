@@ -1,0 +1,8 @@
+https://github.com/anuragmundhada
+https://github.com/timctho/VNect-tensorflow --> tricky to make cafe work (https://gist.github.com/arundasan91/b432cb011d1c45b65222d0fac5f9232c)
+https://gist.github.com/arundasan91/b432cb011d1c45b65222d0fac5f9232c
+
+https://github.com/tensorflow/tfjs-models/tree/master/posenet
+https://ml4a.github.io/demos/tfjs/posenet-music.html
+
+#TODO try rendering like the VR brush but instead of the path of the joints, do it with the path of auto correlated (encoded) joints
