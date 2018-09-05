@@ -1,8 +1,5 @@
 #train the network by classifying windows from the different biking styles
-import sensor_learning.enc_dec_models as models
-
-
-import motion_map.motion_data as mmd
+import motion_data as mmd
 import numpy as np
 from scipy.stats import entropy
 

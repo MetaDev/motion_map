@@ -9,15 +9,12 @@
 *.mp4
 *.gif
 */.idea
-*.pth
 .idea/
-motion_map/tf-openpose/models/
 *.h5
 *.bhv
 *.jar
 *.prototxt
 *.log
-**/motion_map/tf_openpose/models/*
-**/Movement.egg-info/*
+output/
 
 

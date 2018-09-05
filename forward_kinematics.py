@@ -3,7 +3,7 @@ from __future__ import division
 import numpy as np
 
 import copy
-import sensor_learning.data_utils as data_utils
+import h36m_data as data_utils
 
 
 #the paper which gives some eplenation why to use exponential maps
