@@ -24,7 +24,7 @@ data_type=["bike","crossfit"][0]
 if data_type=="bike":
     motion_names=mmd.bike_names[:3]
     motion_dict=dict([(motion_name,mmd.motion_load_qualisys_tsv(motion_name, skip_rows=10, skip_columns=2)) for motion_name in motion_names])
-    motions_data =[mmd.center_norm_data(md[0]) for md in motion_dict.values()]
+    motions_data =[mmd.center_norm_data_h36m(md[0]) for md in motion_dict.values()]
     motions_data=[md.reshape(md.shape[0],-1) for md in motions_data]
 elif data_type=="crossfit":
     pass

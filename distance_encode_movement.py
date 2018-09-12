@@ -216,7 +216,7 @@ def main():
     motion_loading=mmd.motion_load_qualisys_tsv
     motion_names=mmd.bike_names
     motion_dict=dict([(motion_name,motion_loading(motion_name,skip_rows=10,skip_columns=2)) for motion_name in motion_names])
-    motions_data =[mmd.center_norm_data(md[0]) for md in motion_dict.values()]
+    motions_data =[mmd.center_norm_data_h36m(md[0]) for md in motion_dict.values()]
     motions_data=[md.reshape(md.shape[0],-1) for md in motions_data]
     X,Y=generate_windows_and_labels(motions_data)
     model=train_mov_enc(X,Y,"dist_mov_enc_bike")

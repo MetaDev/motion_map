@@ -189,36 +189,36 @@ class FC_CPPN(CPPN):
         return model
 
 
-    #TODO
-    @staticmethod
-    def cross_over(CPPNs):
-        model = copy.deepcopy(CPPNs[0])
-        # create perlin mask
-        tmp = OpenSimplex()
-        masks={}
-        for module in model.modules():
-            if isinstance(module, nn.Linear):
-                w_size=module.weight.size()
-                b_size = module.bias.size()
-
-                x_range,y_range=np.linspace(0,1,w_size[0]),np.linspace(0,1,w_size[1])
-
-                # simplex noise should be generated over a floating range from 0 to 1
-                perlin_weight=np.reshape([tmp.noise2d(x=x, y=y) for x,y in zip(np.meshgrid(x_range, y_range))],(w_size[0],w_size[1]))
-                x_range, y_range = np.arange(0, b_size[0]), np.arange(0, b_size[1])
-                perlin_bias = np.reshape([tmp.noise2d(x=x, y=y) for x, y in np.meshgrid(x_range, y_range)],
-                                           (w_size[0], w_size[1]))
-                #TODO
-                #plot perlin stuff
-
-                # masks[module]=(perlin_weight,perlin_bias)
-
-
-
-        print(tmp.noise2d(x=10, y=10))
-        # equalise historgram
-        # asign interval of color randomly to parents
-        return None
+    # #TODO
+    # @staticmethod
+    # def cross_over(CPPNs):
+    #     model = copy.deepcopy(CPPNs[0])
+    #     # create perlin mask
+    #     tmp = OpenSimplex()
+    #     masks={}
+    #     for module in model.modules():
+    #         if isinstance(module, nn.Linear):
+    #             w_size=module.weight.size()
+    #             b_size = module.bias.size()
+    #
+    #             x_range,y_range=np.linspace(0,1,w_size[0]),np.linspace(0,1,w_size[1])
+    #
+    #             # simplex noise should be generated over a floating range from 0 to 1
+    #             perlin_weight=np.reshape([tmp.noise2d(x=x, y=y) for x,y in zip(np.meshgrid(x_range, y_range))],(w_size[0],w_size[1]))
+    #             x_range, y_range = np.arange(0, b_size[0]), np.arange(0, b_size[1])
+    #             perlin_bias = np.reshape([tmp.noise2d(x=x, y=y) for x, y in np.meshgrid(x_range, y_range)],
+    #                                        (w_size[0], w_size[1]))
+    #             #TODO
+    #             #plot perlin stuff
+    #
+    #             # masks[module]=(perlin_weight,perlin_bias)
+    #
+    #
+    #
+    #     print(tmp.noise2d(x=10, y=10))
+    #     # equalise historgram
+    #     # asign interval of color randomly to parents
+    #     return None
 # from opensimplex import OpenSimplex
 # import matplotlib.pyplot as plt
 # import numpy as np

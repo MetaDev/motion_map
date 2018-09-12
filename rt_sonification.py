@@ -13,7 +13,7 @@ def init_train(motion_names):
     ############# encoding model
     motions_data=[md.motion_load_qualisys_tsv(mn,skip_rows=10, skip_columns=2) for mn in motion_names]
     #the method motion_load_... returns a  tuple of the shape and the actual data
-    motions_data = [md.center_norm_data(motion_data[0]) for motion_data in motions_data]
+    motions_data = [md.center_norm_data_h36m(motion_data[0]) for motion_data in motions_data]
     motions_data=[motion_data.reshape(motion_data.shape[0],-1) for motion_data in motions_data]
 
     #we need a list of movements we want to differentiate
@@ -84,7 +84,7 @@ def test(motion_names,enc_model_name):
     motions_data=[md.motion_load_qualisys_tsv(mn,skip_rows=10, skip_columns=2) for mn in motion_names]
 
     #the method motion_load_... returns a  tuple of the shape and the actual data
-    motions_data = [md.center_norm_data(motion_data[0]) for motion_data in motions_data]
+    motions_data = [md.center_norm_data_h36m(motion_data[0]) for motion_data in motions_data]
     motions_data=[motion_data.reshape(motion_data.shape[0],-1) for motion_data in motions_data]
 
     son_model=generate_random_son_model()

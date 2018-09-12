@@ -7,7 +7,7 @@ file_names = ["harald_music", "harald_no_music", "jacob_cartwheel", "jacob_clean
 bike_names = ["rec7_valerio_bike0010_ref","rec7_valerio_bike0011_asym","rec7_valerio_bike0012_shoulders",
               "rec7_valerio_bike0013_asynch"]
 #100 FPS
-def motion_load_qualisys_tsv(name, skip_rows, skip_columns):
+def motion_load_qualisys_tsv(name, skip_rows=10, skip_columns=2):
     with open('data/IPEM/'+name+".tsv") as tsvfile:
         all_text = [line.split('\t') for line in tsvfile.readlines()]
 
@@ -20,8 +20,9 @@ def motion_load_qualisys_tsv(name, skip_rows, skip_columns):
         # center_pos=(marker_pos[:,8,:]+marker_pos[:,9,:]+marker_pos[:,14,:]+marker_pos[:,15,:])/4
     return marker_pos,marker_pos.shape[1]
 
-def center_norm_data(motion_xyz_data):
-    center_pos= (motion_xyz_data[:, 8, :] + motion_xyz_data[:, 9, :] + motion_xyz_data[:, 14, :] + motion_xyz_data[:, 15, :]) / 4
+from functools import reduce
+def center_norm_data_h36m(motion_xyz_data, center_idxs=[8, 9, 14, 15]):
+    center_pos= reduce(lambda x,y: x+y,[motion_xyz_data[:, i, :] for i in center_idxs])/ len(center_idxs)
     motion_xyz_data= motion_xyz_data - np.repeat(center_pos, motion_xyz_data.shape[1], axis=0).reshape((motion_xyz_data.shape[0], -1, 3))
     motion_xyz_data= (motion_xyz_data-np.min(motion_xyz_data)) / (np.max(motion_xyz_data)-np.min(motion_xyz_data))
     return motion_xyz_data
@@ -29,7 +30,7 @@ def center_norm_data(motion_xyz_data):
 actions = ["directions",  "eating","discussion", "greeting", "phoning",
                "posing", "purchases", "sitting", "sittingdown", "smoking",
                "takingphoto", "waiting", "walking", "walkingdog", "walkingtogether"]
-print((3,3,3,4)[:3])
+
 def load_motion_joint_exp_rot(actions=actions,subjects=[5],data_dir="./data/h3.6m/dataset"):
     # Read data from .txt file
     one_hot = False
