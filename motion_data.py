@@ -66,7 +66,7 @@ def motion_load_h36m(action_name):
 
 class IPEM_plot():
 
-    def __init__(self,ax_mot=None,motion_xyz=None):
+    def __init__(self,ax_mot=None,motion_xyz=None,parent_child_joint=None):
         #for dots on the joints
         # self.graph, = ax_mot.plot(*motion_xyz[0].T, linestyle="", marker="o",markersize=2)
         # lines for bones
@@ -75,8 +75,10 @@ class IPEM_plot():
         self.plots = []
         if motion_xyz is not None:
             motion_xyz = motion_xyz.reshape(motion_xyz.shape[0], -1, 3)
+
             init_row = motion_xyz[0]
-        parent_child_joint = dict([(16, [19, 14, 15]), (15, [12]), (14, [13]), (12, [10]), (13, [11]), (10, [0]), (11, [1]),
+        if parent_child_joint == None:
+            parent_child_joint = dict([(16, [19, 14, 15]), (15, [12]), (14, [13]), (12, [10]), (13, [11]), (10, [0]), (11, [1]),
                                    (19, [17, 18, 22, 23]), (17, [9]), (18, [8]), (9, [6]), (8, [7]), (7, [4])
                                       , (6, [5]), (4, [3]), (22, [23])])
         for connection in list(parent_child_joint.items()):

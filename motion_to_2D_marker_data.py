@@ -83,9 +83,9 @@ def interactive_viz():
             axes[(i, j)].set_axis_off()
     #test with random output
     ims=dict([((i,j),axes[1+i,j].imshow(np.ones((nx,ny,3)),animated=True))for i in range(3) for j in range(3)])
-
-    make_3d_graph = lambda i : axes[(0,i)].plot(*motions_data[0].reshape(-1,3).T, linestyle="", marker="o", markersize=2)[0]
-    poses = [make_3d_graph(i) for i in range(3)]
+    #create stick plot
+    parent_child_joint=dict([(1,[2]),(0,[2,3,5]),(3,[4]),(4,[8]),(5,[6]),(6,[7]),(11,[10]),(12,[9]),(13,[12]),(14,[11]),(2,[13,14])])
+    poses = [mmd.IPEM_plot(ax_mot=axes[(0,i)],motion_xyz=motions_data[0],parent_child_joint=parent_child_joint) for i in range(3)]
     #choose between 0 and 9
 
     torch_frames={}
@@ -136,6 +136,7 @@ def interactive_viz():
             for model in viz_models:
                 model.random_init_weights()
     def update(f):
+        radius=[0.25,0.13,0.25]
         f=f%max([len(motions_data[i]) for i in range(1,3)])
         angle=f%360
         frames_text.set_text("frames: "+str(f))
@@ -146,9 +147,10 @@ def interactive_viz():
                     for i in range(3):
                         ims[(i,j)].set_data(images[i])
                     xyz = motions_data[j][::skip_frames+1][f]
-                    axes[(0, j)].view_init(10, 200)
-                    poses[j].set_data(*xyz.reshape(-1,3).T[0:2])
-                    poses[j].set_3d_properties(xyz.reshape(-1,3).T[2])
+                    # axes[(0, j)].view_init(10, 200)
+                    poses[j].update(xyz.reshape(-1, 3),radius=radius[j])
+                    # poses[j].set_data(*xyz.reshape(-1,3).T[0:2])
+                    # poses[j].set_3d_properties(xyz.reshape(-1,3).T[2])
 
 
     # np.save("test",generate_image(torch_frames[actions[0]][0],model))
@@ -159,86 +161,89 @@ def interactive_viz():
 
 #TODO render to raw video
 def render_viz():
-    folder="output/"
-    model_name="2018-09-12 16:05:10.533266"
+    for model_name in ["2018-09-14 14:29:06.657853","2018-09-14 14:28:47.507557","2018-09-14 14:28:12.733309"]
+        folder="output/"
+        model_name="2018-09-14 14:30:45.315117"
 
-    motion_loading = mmd.motion_load_qualisys_tsv
-    motion_names = ["jacob_walking", "jacob_walking_1", "jacob_walking_2"]
-    # motion load returns motion_xyz,motion_xyz_norm,frame_size
-    motion_dict = dict(
-        [(motion_name, motion_loading(motion_name, skip_rows=12, skip_columns=0)) for motion_name in motion_names])
+        motion_loading = mmd.motion_load_qualisys_tsv
+        motion_names = ["jacob_walking", "jacob_walking_1", "jacob_walking_2"]
+        # motion load returns motion_xyz,motion_xyz_norm,frame_size
+        motion_dict = dict(
+            [(motion_name, motion_loading(motion_name, skip_rows=12, skip_columns=0)) for motion_name in motion_names])
 
-    frames = [slice(1500, 2000), slice(550, 1150), slice(1500, 2000)]
+        frames = [slice(1500, 2000), slice(550, 1150), slice(1500, 2000)]
 
-    motions_data = [md[0][frame] for md, frame in zip(motion_dict.values(), frames)]
-    from functools import reduce
-    def center_norm_data(motion_xyz_data, center_idxs=[3, 5, 13, 14]):
-        center_pos = reduce(lambda x, y: x + y, [motion_xyz_data[:, i, :] for i in center_idxs]) / len(center_idxs)
-        motion_xyz_data = motion_xyz_data - np.repeat(center_pos, motion_xyz_data.shape[1], axis=0).reshape(
-            (motion_xyz_data.shape[0], -1, 3))
-        range = [np.min(motion_xyz_data, axis=(0, 1)), np.max(motion_xyz_data, axis=(0, 1))]
-        motion_xyz_data = (motion_xyz_data - np.min(motion_xyz_data)) / (
-                np.max(motion_xyz_data) - np.min(motion_xyz_data))
+        motions_data = [md[0][frame] for md, frame in zip(motion_dict.values(), frames)]
+        from functools import reduce
+        def center_norm_data(motion_xyz_data, center_idxs=[3, 5, 13, 14]):
+            center_pos = reduce(lambda x, y: x + y, [motion_xyz_data[:, i, :] for i in center_idxs]) / len(center_idxs)
+            motion_xyz_data = motion_xyz_data - np.repeat(center_pos, motion_xyz_data.shape[1], axis=0).reshape(
+                (motion_xyz_data.shape[0], -1, 3))
+            range = [np.min(motion_xyz_data, axis=(0, 1)), np.max(motion_xyz_data, axis=(0, 1))]
+            motion_xyz_data = (motion_xyz_data - np.min(motion_xyz_data)) / (
+                    np.max(motion_xyz_data) - np.min(motion_xyz_data))
 
-        # motion_xyz_data=np.apply_along_axis(lambda coord: (coord-range[0]) / (range[1] - range[0]), 2, motion_xyz_data)
-        return motion_xyz_data
+            # motion_xyz_data=np.apply_along_axis(lambda coord: (coord-range[0]) / (range[1] - range[0]), 2, motion_xyz_data)
+            return motion_xyz_data
 
-    motions_data = [center_norm_data(md[0][frame], center_idxs=[0]) for md, frame in zip(motion_dict.values(), frames)]
+        motions_data = [center_norm_data(md[0][frame], center_idxs=[0]) for md, frame in zip(motion_dict.values(), frames)]
 
-    motions_data = [md.reshape(md.shape[0], -1) for md in motions_data]
+        motions_data = [md.reshape(md.shape[0], -1) for md in motions_data]
 
-    model_type = [cn.FC_CPPN, cn.Node_CPPN][1]
-    model=model_type.load("output/" + model_name)
-    model.to(cn.device)
-    torch_frames = {}
-    # def init torch frames
-    skip_frames = 0
+        model_type = [cn.FC_CPPN, cn.Node_CPPN][1]
+        model=model_type.load("output/" + model_name)
+        model.to(cn.device)
+        torch_frames = {}
+        # def init torch frames
+        skip_frames = 0
 
-    for mt, motion in enumerate(motion_names):
-        torch_frames[motion] = []
-        for frame in motions_data[mt][::skip_frames + 1]:
-            torch_frames[motion].append(cn._tnsr(frame) * 2 - 1)
-    width=10
-    height=10
-    fps=25
-    for mt, motion in enumerate(motion_names):
-        n_frames=len(torch_frames[motion])
-        frames = range(0, min(10,n_frames))
+        for mt, motion in enumerate(motion_names):
+            torch_frames[motion] = []
+            for frame in motions_data[mt][::skip_frames + 1]:
+                torch_frames[motion].append(cn._tnsr(frame) * 2 - 1)
+        width=1000
+        height=1000
+        fps=25
+        for mt, motion in enumerate(motion_names):
+            n_frames=len(torch_frames[motion])
+            frames = range(0, min(1000,n_frames))
 
-        render_name = model_name+"_"+motion+"_"+str(frames)+"_" + str(width) + "," + str(height)
-        import cv2
-        out = cv2.VideoWriter(folder+ render_name + ".mp4", cv2.VideoWriter_fourcc(*'mp4v'),fps , (width, height))
-        #convert all motion to images
-        # iamges=
-        if cn.use_cuda:
-            batch_size=10000
-        else:
-            batch_size=-1
-        for i in frames:
-            print(i)
-            # writing to a image array  .
-            out.write(np.uint8(model.render_image(torch_frames[motion][i], width,height,batch_size) * 255))
-        out.release()
-        render_motion=True
-        if render_motion:
-            motion_data=motions_data[mt]
-            fig = plt.figure()
+            render_name = model_name+"_"+motion+"_"+str(frames)+"_" + str(width) + "," + str(height)
+            import cv2
+            out = cv2.VideoWriter(folder+ render_name + ".mp4", cv2.VideoWriter_fourcc(*'mp4v'),fps , (width, height))
+            #convert all motion to images
+            # iamges=
+            if cn.use_cuda:
+                batch_size=10000
+            else:
+                batch_size=-1
+            for i in frames:
+                print(i)
+                # writing to a image array  .
+                out.write(np.uint8(model.render_image(torch_frames[motion][i], width,height,batch_size) * 255))
+            out.release()
+            render_motion=True
+            if render_motion:
+                motion_data=motions_data[mt]
+                fig = plt.figure()
 
-            ax=plt.axes(projection='3d')
-            ax.set_axis_off()
-            ax.view_init(10, 200)
-            pose=ax.plot(*motion_data.reshape(-1, 3).T, linestyle="", marker="o", markersize=2)[0]
+                ax=plt.axes(projection='3d')
+                ax.set_axis_off()
+                ax.view_init(10, 200)
+                parent_child_joint = dict(
+                    [(1, [2]), (0, [2, 3, 5]), (3, [4]), (4, [8]), (5, [6]), (6, [7]), (11, [10]), (12, [9]), (13, [12]),
+                     (14, [11]), (2, [13, 14])])
+                pose = mmd.IPEM_plot(ax_mot=ax, motion_xyz=motions_data[0], parent_child_joint=parent_child_joint)
 
+                radius = [0.25, 0.13, 0.25]
+                def update(f):
+                    xyz = motion_data[::skip_frames + 1][f]
+                    pose.update(xyz.reshape(-1, 3), radius=radius[mt])
 
-            def update(f):
-                xyz = motion_data[::skip_frames + 1][f]
-                pose.set_data(*xyz.reshape(-1, 3).T[0:2])
-                pose.set_3d_properties(xyz.reshape(-1, 3).T[2])
+                anim = FuncAnimation(fig, update, frames=frames, interval=1)
+                anim.save(folder+motion+"_"+str(frames)+'.gif', dpi=80, writer='imagemagick')
 
-            anim = FuncAnimation(fig, update, frames=frames, interval=1)
-            anim.save(folder+motion+"_"+str(frames)+'.gif', dpi=80, writer='imagemagick')
-
-# render_viz()
-if __name__ == "__main__": interactive_viz()
+render_viz()
+# if __name__ == "__main__": interactive_viz()
 
 
