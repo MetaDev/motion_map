@@ -12,7 +12,7 @@ import torch
 import copy
 from numpy.random import normal
 
-from opensimplex import OpenSimplex
+# from opensimplex import OpenSimplex
 
 use_cuda = torch.cuda.is_available()
 device="cpu"

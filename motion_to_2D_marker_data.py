@@ -6,6 +6,8 @@
 # ...      verticalalignment='center', transform=ax.transAxes)
 
 import numpy as np
+import matplotlib as mpl
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation
@@ -24,21 +26,6 @@ def interactive_viz():
     motion_names=["jacob_walking","jacob_walking_1","jacob_walking_2"]
     #motion load returns motion_xyz,motion_xyz_norm,frame_size
     motion_dict = dict([(motion_name, motion_loading(motion_name,skip_rows=12,skip_columns=0)) for motion_name in motion_names])
-    # #filter outliers
-    # motions_data = [md[0] for md in motion_dict.values()]
-    # std=[np.std(md,axis=(0,1)) for md in motions_data]
-    # mean=[np.mean(md,axis=(0,1)) for md in motions_data]
-    # # motions_data[0][:,:,]
-    # print(mean)
-    # print(std)
-    # def outlier_default(elt,mean,var):
-    #     index=np.logical_or(elt <mean-var, elt> mean + var)
-    #     elt[index]=mean[index]
-    #     return elt
-    # print(np.max(test))
-    # print(np.min(test))
-    # [np.apply_along_axis(lambda coord: outlier_default(coord,mean[0],std[0]) ,2,md )for md in motions_data]
-    frames=[slice(0,-1),slice(550,1150),slice(1500,2000)]
     frames = [slice(1500, 2000), slice(550,1150), slice(1500, 2000)]
     motions_data = [md[0][frame] for md,frame in zip(motion_dict.values(),frames)]
     from functools import reduce
@@ -46,11 +33,8 @@ def interactive_viz():
         center_pos = reduce(lambda x, y: x + y, [motion_xyz_data[:, i, :] for i in center_idxs]) / len(center_idxs)
         motion_xyz_data = motion_xyz_data - np.repeat(center_pos, motion_xyz_data.shape[1], axis=0).reshape(
             (motion_xyz_data.shape[0], -1, 3))
-        range = [np.min(motion_xyz_data, axis=(0, 1)), np.max(motion_xyz_data, axis=(0, 1))]
         motion_xyz_data = (motion_xyz_data - np.min(motion_xyz_data)) / (
                     np.max(motion_xyz_data) - np.min(motion_xyz_data))
-
-        # motion_xyz_data=np.apply_along_axis(lambda coord: (coord-range[0]) / (range[1] - range[0]), 2, motion_xyz_data)
         return motion_xyz_data
     motions_data = [center_norm_data(md[0][frame],center_idxs=[0]) for md,frame in zip(motion_dict.values(),frames)]
 
@@ -62,7 +46,7 @@ def interactive_viz():
     n_frames=list(motion_dict.values())[0][0].shape[0]
     model_params = frame_size, list(cn.Fun.funs.keys()),3
 
-    model_constr = lambda model_params: cn.Node_CPPN(frame_size, list(cn.Fun.funs.keys()),3,0.05)
+    model_constr = lambda model_params: cn.Node_CPPN(frame_size, list(cn.Fun.funs.keys()),3,0.1)
 
     viz_models = [model_constr(model_params).to(cn.device) for i in range(3)]
     for model in viz_models:
@@ -174,22 +158,16 @@ def render_viz():
         center_pos = reduce(lambda x, y: x + y, [motion_xyz_data[:, i, :] for i in center_idxs]) / len(center_idxs)
         motion_xyz_data = motion_xyz_data - np.repeat(center_pos, motion_xyz_data.shape[1], axis=0).reshape(
             (motion_xyz_data.shape[0], -1, 3))
-        range = [np.min(motion_xyz_data, axis=(0, 1)), np.max(motion_xyz_data, axis=(0, 1))]
         motion_xyz_data = (motion_xyz_data - np.min(motion_xyz_data)) / (
                 np.max(motion_xyz_data) - np.min(motion_xyz_data))
-
-        # motion_xyz_data=np.apply_along_axis(lambda coord: (coord-range[0]) / (range[1] - range[0]), 2, motion_xyz_data)
         return motion_xyz_data
 
     motions_data = [center_norm_data(md[0][frame], center_idxs=[0]) for md, frame in zip(motion_dict.values(), frames)]
 
     motions_data = [md.reshape(md.shape[0], -1) for md in motions_data]
     print(motions_data[0].shape)
-    for model_name in ["2018-09-14 14:29:06.657853","2018-09-14 14:28:47.507557","2018-09-14 14:28:12.733309"]:
+    for model_name in ["2018-09-16 20:59:19.239154","2018-09-16 20:58:51.504451"]:
         folder="output/"
-
-
-
         model_type = [cn.FC_CPPN, cn.Node_CPPN][1]
         model=model_type.load("output/" + model_name)
         model.to(cn.device)
@@ -208,7 +186,7 @@ def render_viz():
             render_anim=False
             if render_anim:
                 n_frames=len(torch_frames[motion])
-                frames = range(0, min(1000,n_frames))
+                frames = range(0,n_frames)
 
                 render_name = model_name+"_"+motion+"_"+str(frames)+"_" + str(width) + "," + str(height)
                 import cv2
@@ -234,7 +212,7 @@ def render_viz():
                 ax.view_init(10, 200)
                 parent_child_joint = dict(
                     [(1, [0]), (0, [2, 3, 5]), (3, [4]), (4, [8]), (5, [6]), (6, [7]), (11, [10]), (12, [9]),
-                     (13, [12]), (14, [11]), (2, [1, 13, 14])])
+                     (13, [12,14]), (14, [11]), (2, [1, 13, 14])])
 
                 pose = mmd.IPEM_plot(ax_mot=ax, motion_xyz=motions_data[0], parent_child_joint=parent_child_joint)
 
@@ -244,7 +222,7 @@ def render_viz():
                     xyz = motion_data[::skip_frames + 1][f]
                     pose.update(xyz.reshape(-1, 3), radius=radius[mt])
 
-                anim = FuncAnimation(fig, update, frames=np.arange(0, max([len(motions_data[i]) for i in range(1,3)])), interval=1)
+                anim = FuncAnimation(fig, update, frames=np.arange(0, len(motion_data)), interval=1)
                 anim.save(folder+motion+"_"+str(frames)+'.gif', dpi=80, writer='imagemagick')
 
 render_viz()
