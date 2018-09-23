@@ -1,20 +1,12 @@
-*/data
-/data
-*/data/*
-*/output
 *.pkl
 *.pyc
 *.bin
-*.png
-*.mp4
-*.gif
 */.idea
 .idea/
-*.h5
 *.bhv
 *.jar
 *.prototxt
 *.log
-output/
+
 
 
